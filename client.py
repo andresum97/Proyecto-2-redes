@@ -5,7 +5,6 @@ import logging
 class Register(ClientXMPP):
 
     def __init__(self, jid, password):
-        print('Entro al register')
         ClientXMPP.__init__(self, jid, password)
         self.add_event_handler("session_start", self.start)
         self.add_event_handler("register", self.registerAccount)
@@ -16,13 +15,11 @@ class Register(ClientXMPP):
         self.register_plugin('xep_0077') # In-band Registration
 
     def start(self, event):
-        print("llego al start")
         self.send_presence()
         self.get_roster()
         self.disconnect()
 
     def registerAccount(self, iq):
-        print('Llego al register')
         resp = self.Iq()
         resp['type'] = 'set'
         resp['register']['username'] = self.boundjid.user
@@ -43,3 +40,22 @@ class Register(ClientXMPP):
             log.error("No response from server.")
             self.disconnect()
 
+class Client(ClientXMPP):
+    def __init__(self, jid, password):
+        print('Entro al register')
+        ClientXMPP.__init__(self, jid, password)
+        self.add_event_handler("session_start", self.start)
+
+        self.register_plugin('xep_0030') # Service Discovery
+        self.register_plugin('xep_0004') # Data forms
+        self.register_plugin('xep_0066') # Out-of-band Data
+        self.register_plugin('xep_0077') # In-band Registration
+
+    def start(self, event):
+        self.send_presence()
+        print("Logueado")
+        print(self.get_roster())
+
+    def logout(self):
+        print("Desconectado")
+        self.disconnect(wait=True)
