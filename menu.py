@@ -23,7 +23,7 @@ if __name__ == '__main__':
     4. Mostrar todos los usuarios \n
     5. Agregar un usuario a los contactos \n
     6. Mostrar detalles de un usuario \n
-    7. Comunicacion 1 a 1 con usuario \n
+    7. Enviar mensaje a usuario \n
     8. Participar en conversasiones grupales \n
     9. Definir mensaje de presencia \n
     10. Salir\n
@@ -37,18 +37,21 @@ if __name__ == '__main__':
         opcion = input('Ingrese una opcion')
 
         if opcion == '1': #Registrar un usuario
+            username = input('Ingrese nombre usuario')
+            password = input('Ingrese contraseña')
             register = Register(username+DOMAIN, password)
             if register.connect():
                 print("Llego al if")
                 register.process(block=True)
-                print("Registro realizado")
             else:
                 print("No ha sido posible conectarse")
 
         elif opcion == '2' and login_flag == False: #Iniciar sesión
+            username = input('Ingrese nombre usuario')
+            password = input('Ingrese contraseña')
             cliente = Client(username+DOMAIN, password)
             if cliente.connect():
-                cliente.process(block=False)
+                cliente.process()
                 print("Conectado")
                 login_flag = True
             else:
@@ -61,7 +64,30 @@ if __name__ == '__main__':
             else:
                 print("No fue posible desconectarse")
 
-        elif opcion == '9': #Salir
+        elif opcion == '3' and login_flag == True: #Eliminar cuenta
+            if cliente.connect():
+                cliente.unregister()
+                login_flag = False
+            else:
+                print("No fue posible eliminar la cuenta")
+        
+        elif opcion == '5' and login_flag == True: #Agregar usuarios
+            if cliente.connect():
+                user = input("Ingrese el usuario que desea agregar: ")
+                cliente.saveUser(user+DOMAIN)
+            else:
+                print("No se ha podido agregar el usuario")
+
+        elif opcion == '7' and login_flag == True: #Enviar mensaje
+            jid = input("Usuario a enviar el mensaje")
+            message = input("Mensaje a enviar")
+            if cliente.connect():
+                cliente.sendMessage(jid,message)
+            else:
+                print("No fue posible enviar el mensaje")
+
+
+        elif opcion == '10': #Salir
             active = False
 
         else:
