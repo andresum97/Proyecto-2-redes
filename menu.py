@@ -37,8 +37,8 @@ if __name__ == '__main__':
         opcion = input('Ingrese una opcion')
 
         if opcion == '1': #Registrar un usuario
-            username = input('Ingrese nombre usuario')
-            password = input('Ingrese contraseña')
+            username = input('Ingrese nombre usuario: ')
+            password = input('Ingrese contraseña: ')
             register = Register(username+DOMAIN, password)
             if register.connect():
                 print("Llego al if")
@@ -47,8 +47,8 @@ if __name__ == '__main__':
                 print("No ha sido posible conectarse")
 
         elif opcion == '2' and login_flag == False: #Iniciar sesión
-            username = input('Ingrese nombre usuario')
-            password = input('Ingrese contraseña')
+            username = input('Ingrese nombre usuario: ')
+            password = input('Ingrese contraseña: ')
             cliente = Client(username+DOMAIN, password)
             if cliente.connect():
                 cliente.process()
@@ -65,26 +65,37 @@ if __name__ == '__main__':
                 print("No fue posible desconectarse")
 
         elif opcion == '3' and login_flag == True: #Eliminar cuenta
-            if cliente.connect():
-                cliente.unregister()
-                login_flag = False
-            else:
-                print("No fue posible eliminar la cuenta")
+            cliente.unregister()
+            login_flag = False
         
         elif opcion == '5' and login_flag == True: #Agregar usuarios
-            if cliente.connect():
-                user = input("Ingrese el usuario que desea agregar: ")
-                cliente.saveUser(user+DOMAIN)
-            else:
-                print("No se ha podido agregar el usuario")
+            user = input("Ingrese el usuario que desea agregar: ")
+            cliente.saveUser(user+DOMAIN)
 
         elif opcion == '7' and login_flag == True: #Enviar mensaje
-            jid = input("Usuario a enviar el mensaje")
+            jid = input("Usuario a enviar el mensaje: ")
             message = input("Mensaje a enviar")
-            if cliente.connect():
-                cliente.sendMessage(jid,message)
-            else:
-                print("No fue posible enviar el mensaje")
+            cliente.sendMessage(jid,message)
+
+        elif opcion == '9' and login_flag == True: #Cambiar estado
+            print("""
+            ========== Opciones de status ==========
+            1. chat - Estas disponible para conversar \n
+            2. away - No estas disponible para IM por periodo corto de tiempo \n
+            3. xa - No estas disponible para un periodo largo de tiempo \n
+            4. dnd - Estas ocupado y no quieres interrupcciones \n
+            """)
+            state = True
+            show = 0
+            while state:
+                try:
+                    show = int(input("Ingrese una opcion de status: "))
+                    if(show>=1 and show<=4):
+                        state = False
+                except:
+                    print("Debe ingresar un valor numerico")
+            status = input("Ingrese mensaje para el status")
+            cliente.changeStatus(show,status)
 
 
         elif opcion == '10': #Salir
