@@ -59,6 +59,8 @@ class Client(ClientXMPP):
         self.register_plugin('xep_0045') # Multi-User Chat (MUC)
         self.register_plugin('xep_0096') # File transfer
 
+        self.nick = ""
+
     def start(self, event):
         try:
             log = logging.getLogger("my-logger")
@@ -78,9 +80,25 @@ class Client(ClientXMPP):
         self.disconnect(wait=True)
 
     def message(self,msg):
-        print("\n Tipo de mensaje",msg['type'])
-        print("De",msg['from'])
-        print(msg['body'])
+        if str(msg['type']) == 'chat':
+        # print("Type: "+msg['type'])
+            print("\nDe",msg['from'])
+            print(msg['body'])
+        elif str(msg['type']) == 'groupchat':
+            print("Entro mensaje grupal")
+            print('\n  (%(from)s): %(body)s' %(msg))
+    
+    def messageRoom(self,room,msg):
+        try:
+            self.send_message(mto=room+'@conference.redes2020.xyz',mbody=msg, mtype='groupchat')
+            print("Mensaje enviado a: "+room)
+        except IqError:
+            print("No response from server.")
+
+    def joinRoom(self, room, nick):
+        print("Te vas a unir al room ")
+        self.plugin['xep_0045'].joinMUC(room+'@conference.redes2020.xyz', nick, wait=True)
+        self.nick = nick
 
     def changeStatus(self, show, status):
         show_text = ""

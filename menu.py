@@ -13,7 +13,7 @@ if __name__ == '__main__':
     menu_logout = """============ MENU ============== \n
     1. Registrar un usuario\n
     2. Login\n
-    10. Salir
+    11. Salir
     """
 
     menu_login = """============ MENU ============== \n
@@ -24,9 +24,10 @@ if __name__ == '__main__':
     5. Agregar un usuario a los contactos \n
     6. Mostrar detalles de un usuario \n
     7. Enviar mensaje a usuario \n
-    8. Participar en conversasiones grupales \n
-    9. Definir mensaje de presencia \n
-    10. Salir\n
+    8. Unirse a grupo \n
+    9. Enviar mensaje a grupo \n
+    10. Definir mensaje de presencia \n
+    11. Salir\n
     """
 
     while active:
@@ -77,7 +78,18 @@ if __name__ == '__main__':
             message = input("Mensaje a enviar")
             cliente.sendMessage(jid,message)
 
-        elif opcion == '9' and login_flag == True: #Cambiar estado
+        elif opcion == '8' and login_flag == True: #Unirse a grupo
+            print("Si el grupo no existe se creara automaticamente \n")
+            room = input("Ingrese nombre del room: \n")
+            nick = input("Ingrese apodo con el que aparecera en el room: \n")
+            cliente.joinRoom(room,nick)
+
+        elif opcion == '9' and login_flag == True: #Enviar mensaje a grupo
+            room = input("Ingrese nombre del room: ")
+            message = input("Ingrese el mensaje: ")
+            cliente.messageRoom(room,message)
+
+        elif opcion == '10' and login_flag == True: #Cambiar estado
             print("""
             ========== Opciones de status ==========
             1. chat - Estas disponible para conversar \n
@@ -98,7 +110,7 @@ if __name__ == '__main__':
             cliente.changeStatus(show,status)
 
 
-        elif opcion == '10': #Salir
+        elif opcion == '11': #Salir
             active = False
 
         else:
