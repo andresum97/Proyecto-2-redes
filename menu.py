@@ -17,8 +17,8 @@ if __name__ == '__main__':
     """
 
     menu_login = """============ MENU ============== \n
-    1. Registrar un usuario\n
-    2. Logout\n
+    1. Registrar un usuario \n
+    2. Logout \n
     3. Eliminar cuenta del servidor \n
     4. Mostrar todos los usuarios \n
     5. Agregar un usuario a los contactos \n

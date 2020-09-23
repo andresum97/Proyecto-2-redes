@@ -54,6 +54,7 @@ class Client(ClientXMPP):
         self.add_event_handler("session_start", self.start)
         self.add_event_handler('message', self.message)
         self.add_event_handler('presence_subscribe',self.new_user_suscribed)
+        self.add_event_handler("groupchat_message", self.group_mention)
 
         self.received = set()
         self.presences_received = threading.Event()
@@ -72,8 +73,8 @@ class Client(ClientXMPP):
     def start(self, event):
         try:
             log = logging.getLogger("my-logger")
-            self.send_presence()
-            print(self.get_roster())
+            self.send_presence(pshow='chat',pstatus='How you doin')
+            self.get_roster()
         except IqError as e:
             print("Could not login: %s" % e.iq['error']['text'])
             log.error("Could not login: %s" % e.iq['error']['text'])
@@ -87,9 +88,24 @@ class Client(ClientXMPP):
         print("Desconectado")
         self.disconnect(wait=True)
 
+    def group_mention(self, msg):
+        if msg['mucnick'] != self.nick and self.nick in msg['body']:
+            user = str(msg['from'])
+            index = user.find('@conference')
+            print('\n')
+            print("<<<<<<<<<<<<<<<< NOTIFICATION >>>>>>>>>>>>>>>>>>")
+            print(user[:index]+'te ha mencionado en el grupo => '+msg['mucnick']+'\n')
+            print('Ve y revisa que han dicho de ti \n')
+            print("<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>")
+            print('\n')
+
+
     def new_user_suscribed(self,presence):
-        print("Pero esto si llega")
-        print(presence['from']+' se ha suscrito a ti ')
+        print('\n')
+        print("<<<<<<<<<<<<<<<< NOTIFICATION >>>>>>>>>>>>>>>>>>")
+        print(str(presence['from'])+' te ha agregado! ')
+        print("<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        print('\n')
 
     def message(self,msg):
         if str(msg['type']) == 'chat':
@@ -171,12 +187,12 @@ class Client(ClientXMPP):
 
                 connections = self.client_roster.presence(jid)
                 for res, pres in connections.items():
-                    show = 'available'
+                    show = 'chat'
                     if pres['show']:
                         show = pres['show']
                     temp.append(show)
                 if len(temp) == 2:
-                    temp.append('unavailable')
+                    temp.append('away')
                 if str(jid) == username+"@redes2020.xyz":
                     proof = True
                     t2.add_row(temp)
