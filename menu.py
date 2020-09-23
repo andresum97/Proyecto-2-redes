@@ -13,7 +13,7 @@ if __name__ == '__main__':
     menu_logout = """============ MENU ============== \n
     1. Registrar un usuario\n
     2. Login\n
-    11. Salir
+    12. Salir
     """
 
     menu_login = """============ MENU ============== \n
@@ -26,8 +26,9 @@ if __name__ == '__main__':
     7. Enviar mensaje a usuario \n
     8. Unirse a grupo \n
     9. Enviar mensaje a grupo \n
-    10. Definir mensaje de presencia \n
-    11. Salir\n
+    10. Crear un grupo \n
+    11. Definir mensaje de presencia \n
+    12. Salir\n
     """
 
     while active:
@@ -68,10 +69,17 @@ if __name__ == '__main__':
         elif opcion == '3' and login_flag == True: #Eliminar cuenta
             cliente.unregister()
             login_flag = False
+
+        elif opcion == '4' and login_flag == True: #Mostrar usuarios
+            cliente.getUsers()
         
         elif opcion == '5' and login_flag == True: #Agregar usuarios
             user = input("Ingrese el usuario que desea agregar: ")
             cliente.saveUser(user+DOMAIN)
+        
+        elif opcion == '6' and login_flag == True: #Mostrar usuario especifico
+            user = input("Ingrese el usuario a buscar: ")
+            cliente.getUser(user)
 
         elif opcion == '7' and login_flag == True: #Enviar mensaje
             jid = input("Usuario a enviar el mensaje: ")
@@ -79,7 +87,6 @@ if __name__ == '__main__':
             cliente.sendMessage(jid,message)
 
         elif opcion == '8' and login_flag == True: #Unirse a grupo
-            print("Si el grupo no existe se creara automaticamente \n")
             room = input("Ingrese nombre del room: \n")
             nick = input("Ingrese apodo con el que aparecera en el room: \n")
             cliente.joinRoom(room,nick)
@@ -88,8 +95,13 @@ if __name__ == '__main__':
             room = input("Ingrese nombre del room: ")
             message = input("Ingrese el mensaje: ")
             cliente.messageRoom(room,message)
+        
+        elif opcion == '10' and login_flag == True: #Unirse a grupo
+            room = input("Ingrese nombre del room: \n")
+            nick = input("Ingrese apodo con el que aparecera en el room: \n")
+            cliente.createRoom(room,nick)
 
-        elif opcion == '10' and login_flag == True: #Cambiar estado
+        elif opcion == '11' and login_flag == True: #Cambiar estado
             print("""
             ========== Opciones de status ==========
             1. chat - Estas disponible para conversar \n
@@ -110,7 +122,7 @@ if __name__ == '__main__':
             cliente.changeStatus(show,status)
 
 
-        elif opcion == '11': #Salir
+        elif opcion == '12': #Salir
             active = False
 
         else:

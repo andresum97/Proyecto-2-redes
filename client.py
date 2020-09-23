@@ -3,6 +3,8 @@ from sleekxmpp.xmlstream.stanzabase import ET, ElementBase
 from sleekxmpp.plugins.xep_0096 import stanza, File
 from sleekxmpp.exceptions import IqError, IqTimeout
 import logging
+import threading
+from prettytable import PrettyTable
 
 class Register(ClientXMPP):
 
@@ -46,10 +48,16 @@ class Register(ClientXMPP):
 
 class Client(ClientXMPP):
     def __init__(self, jid, password):
-        print('Entro al register')
         ClientXMPP.__init__(self, jid, password)
+        self.auto_authorize = True
+        self.auto_subscribe = True
         self.add_event_handler("session_start", self.start)
         self.add_event_handler('message', self.message)
+        self.add_event_handler('presence_subscribe',self.new_user_suscribed)
+
+        self.received = set()
+        self.presences_received = threading.Event()
+
 
         self.register_plugin('xep_0030') # Service Discovery
         self.register_plugin('xep_0004') # Data forms
@@ -79,6 +87,10 @@ class Client(ClientXMPP):
         print("Desconectado")
         self.disconnect(wait=True)
 
+    def new_user_suscribed(self,presence):
+        print("Pero esto si llega")
+        print(presence['from']+' se ha suscrito a ti ')
+
     def message(self,msg):
         if str(msg['type']) == 'chat':
         # print("Type: "+msg['type'])
@@ -96,9 +108,18 @@ class Client(ClientXMPP):
             print("No response from server.")
 
     def joinRoom(self, room, nick):
+        status = "Hello :D"
         print("Te vas a unir al room ")
-        self.plugin['xep_0045'].joinMUC(room+'@conference.redes2020.xyz', nick, wait=True)
+        self.plugin['xep_0045'].joinMUC(room+'@conference.redes2020.xyz', nick, pstatus=status, pfrom=self.boundjid.full, wait=True)
         self.nick = nick
+
+    def createRoom(self, room, nick):
+        status = "Hello :D"
+        print("Te vas a unir al room ")
+        self.plugin['xep_0045'].joinMUC(room+'@conference.redes2020.xyz', nick, pstatus=status, pfrom=self.boundjid.full, wait=True)
+        self.nick = nick
+        self.plugin['xep_0045'].setAffiliation(room+'@conference.redes2020.xyz', self.boundjid.full, affiliation='owner')
+        self.plugin['xep_0045'].configureRoom(room+'@conference.redes2020.xyz',ifrom=self.boundjid.full)
 
     def changeStatus(self, show, status):
         show_text = ""
@@ -133,3 +154,114 @@ class Client(ClientXMPP):
         res = iq.send()
         if res['type'] == 'result':
             print("Cuenta eliminada")
+
+    def getUser(self, username):
+        print("========= Contacto a buscar ============")
+        print('Esperando...\n')
+        proof = False
+        self.presences_received.wait(1)
+        groups = self.client_roster.groups()
+        t2 = PrettyTable(['Username','Subscription','Status'])
+        for group in groups:
+            for jid in groups[group]:
+                temp = []
+                sub = self.client_roster[jid]['subscription']           
+                temp.append(jid)
+                temp.append(sub)
+
+                connections = self.client_roster.presence(jid)
+                for res, pres in connections.items():
+                    show = 'available'
+                    if pres['show']:
+                        show = pres['show']
+                    temp.append(show)
+                if len(temp) == 2:
+                    temp.append('unavailable')
+                if str(jid) == username+"@redes2020.xyz":
+                    proof = True
+                    t2.add_row(temp)
+        if proof:
+            print(t2)
+        else:
+            print("No se encontro al usuario")
+
+
+
+    def getUsers(self):
+        iq = self.Iq()
+        iq['type'] = 'set'
+        iq['id'] = 'search_result'
+        iq['to'] = 'search.redes2020.xyz'
+
+        item = ET.fromstring("<query xmlns='jabber:iq:search'> \
+                                <x xmlns='jabber:x:data' type='submit'> \
+                                    <field type='hidden' var='FORM_TYPE'> \
+                                        <value>jabber:iq:search</value> \
+                                    </field> \
+                                    <field var='Username'> \
+                                        <value>1</value> \
+                                    </field> \
+                                    <field var='search'> \
+                                        <value>*</value> \
+                                    </field> \
+                                </x> \
+                              </query>")
+        iq.append(item)
+        res = iq.send()
+        # print(res)
+        data = []
+        temp = []
+        cont = 0
+        for i in res.findall('.//{jabber:x:data}value'):
+            cont += 1
+            txt = ''
+            if i.text == None:
+                txt = '--'
+            else:
+                txt = i.text
+
+            temp.append(txt)
+            if cont == 4:
+                cont = 0
+                data.append(temp)
+                temp = []
+
+        t = PrettyTable(['Email', 'JID', 'Username', 'Name'])
+        for i in data:
+            t.add_row(i)
+        print(t)
+
+        print("========= Lista de Contactos ============")
+        print('Esperando...\n')
+        self.presences_received.wait(1)
+        groups = self.client_roster.groups()
+        t2 = PrettyTable(['Username','Subscription','Status'])
+        for group in groups:
+            for jid in groups[group]:
+                temp = []
+                sub = self.client_roster[jid]['subscription']           
+                temp.append(jid)
+                temp.append(sub)
+
+                connections = self.client_roster.presence(jid)
+                for res, pres in connections.items():
+                    show = 'available'
+                    if pres['show']:
+                        show = pres['show']
+                    temp.append(show)
+                if len(temp) == 2:
+                    temp.append('unavailable')
+                if str(jid) != str(self.boundjid.bare):
+                    t2.add_row(temp)
+        print(t2)
+            
+
+def wait_for_presences(self, pres):
+        """
+        Track how many roster entries have received presence updates.
+        """
+        self.received.add(pres['from'].bare)
+        if len(self.received) >= len(self.client_roster.keys()):
+            self.presences_received.set()
+        else:
+            self.presences_received.clear()
