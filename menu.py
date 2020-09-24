@@ -14,7 +14,7 @@ if __name__ == '__main__':
     menu_logout = """============ MENU ============== \n
     1. Registrar un usuario\n
     2. Login\n
-    13. Salir
+    3. Salir \n
     =================================================
     """
 
@@ -31,7 +31,6 @@ if __name__ == '__main__':
     10. Crear un grupo \n
     11. Definir mensaje de presencia \n
     12. Enviar archivo \n
-    13. Salir\n
     ===============================================
     """
     # Ciclo que se ejecuta hasta que el usuario decide cerrar el programa
@@ -71,8 +70,10 @@ if __name__ == '__main__':
                 print("No fue posible desconectarse")
 
         elif opcion == '3' and login_flag == True: #Eliminar cuenta
-            cliente.unregister()
-            login_flag = False
+            seguro = input("¿Esta totalmente seguro de eliminar la cuenta? (y/n)  ")
+            if seguro == 'y':
+                cliente.unregister()
+                login_flag = False
 
         elif opcion == '4' and login_flag == True: #Mostrar usuarios
             cliente.getUsers()
@@ -125,14 +126,14 @@ if __name__ == '__main__':
             status = input("Ingrese mensaje para el status")
             cliente.changeStatus(show,status)
         
-        elif opcion == '12': #Enviar archivo
+        elif opcion == '12' and login_flag == True: #Enviar archivo
             path = input('Ingrese el nombre del archivo: ')
             path_ = os.path.join(os.path.expanduser('~'),'Desktop','Images',path)
             dest = input('Ingrese al destinatario: ')
             cliente.sendFile(path_,dest)
 
 
-        elif opcion == '13': #Salir
+        elif (opcion == '3') and (login_flag == False): #Salir
             active = False
 
         else:
