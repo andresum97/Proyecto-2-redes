@@ -6,6 +6,14 @@ import logging
 import threading
 from prettytable import PrettyTable
 
+import filetype
+import base64
+from datetime import datetime
+import time
+import subprocess
+from tkinter import filedialog
+import os
+
 class Register(ClientXMPP):
 
     def __init__(self, jid, password):
@@ -109,12 +117,22 @@ class Client(ClientXMPP):
 
     def message(self,msg):
         if str(msg['type']) == 'chat':
-        # print("Type: "+msg['type'])
-            print("\nDe",msg['from'])
-            print(msg['body'])
+            if str(msg['subject']) == 'send_file' or len(msg['body']) > 500:
+                print("***************** Te han enviado un archivo *******************")
+                img_body = msg['body']
+                file_ = img_body.encode('utf-8')
+                file_ = base64.decodebytes(file_)
+                with open("xmpp_"+str(int(time.time()))+".png","wb") as f:
+                    f.write(file_)
+            else:
+                print("***************** Mensaje de "+str(msg['from'])+" *****************")
+                # print("\nDe",msg['from'])
+                print(str(msg['body']))
+                print("***************************************************************")
         elif str(msg['type']) == 'groupchat':
-            print("Entro mensaje grupal")
+            print("***************** mensaje grupal ******************************")
             print('\n  (%(from)s): %(body)s' %(msg))
+            print("***************************************************************")
     
     def messageRoom(self,room,msg):
         try:
@@ -170,6 +188,12 @@ class Client(ClientXMPP):
         res = iq.send()
         if res['type'] == 'result':
             print("Cuenta eliminada")
+
+    def sendFile(self, path, to):
+        with open(path,'rb') as img:
+            file_ = base64.b64encode(img.read()).decode('utf-8')
+
+        self.send_message(mto=to+'@redes2020.xyz', mbody=file_, msubject='send_file', mtype='chat')
 
     def getUser(self, username):
         print("========= Contacto a buscar ============")
@@ -267,7 +291,13 @@ class Client(ClientXMPP):
                     temp.append(show)
                 if len(temp) == 2:
                     temp.append('unavailable')
-                if str(jid) != str(self.boundjid.bare):
+                
+                # if str(jid).find('@conference.redes2020.xyz') != -1:
+                #     while len(temp) > 3:
+                #         temp.pop(-1)
+                
+                if str(jid) != str(self.boundjid.bare) and str(jid).find('@conference.redes2020.xyz') == -1:
+                    #print(str(temp))
                     t2.add_row(temp)
         print(t2)
             

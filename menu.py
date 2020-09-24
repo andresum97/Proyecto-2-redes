@@ -1,4 +1,5 @@
 from client import Register,Client
+import os
 
 DOMAIN = '@redes2020.xyz'
 
@@ -13,7 +14,8 @@ if __name__ == '__main__':
     menu_logout = """============ MENU ============== \n
     1. Registrar un usuario\n
     2. Login\n
-    12. Salir
+    13. Salir
+    =================================================
     """
 
     menu_login = """============ MENU ============== \n
@@ -28,7 +30,9 @@ if __name__ == '__main__':
     9. Enviar mensaje a grupo \n
     10. Crear un grupo \n
     11. Definir mensaje de presencia \n
-    12. Salir\n
+    12. Enviar archivo \n
+    13. Salir\n
+    ===============================================
     """
 
     while active:
@@ -120,9 +124,15 @@ if __name__ == '__main__':
                     print("Debe ingresar un valor numerico")
             status = input("Ingrese mensaje para el status")
             cliente.changeStatus(show,status)
+        
+        elif opcion == '12': #Enviar archivo
+            path = input('Ingrese el nombre de la ruta del archivo: ')
+            path_ = os.path.join(os.path.expanduser('~'),'Desktop','Images',path)
+            dest = input('Ingrese al destinatario: ')
+            cliente.sendFile(path_,dest)
 
 
-        elif opcion == '12': #Salir
+        elif opcion == '13': #Salir
             active = False
 
         else:
