@@ -34,8 +34,9 @@ if __name__ == '__main__':
     13. Salir\n
     ===============================================
     """
-
+    # Ciclo que se ejecuta hasta que el usuario decide cerrar el programa
     while active:
+        # Para mostrar el menu dependiendo si esta loqgueado o no el usuario
         if login_flag:
             print(menu_login)
         else:
@@ -47,7 +48,6 @@ if __name__ == '__main__':
             password = input('Ingrese contraseña: ')
             register = Register(username+DOMAIN, password)
             if register.connect():
-                print("Llego al if")
                 register.process(block=True)
             else:
                 print("No ha sido posible conectarse")
@@ -126,7 +126,7 @@ if __name__ == '__main__':
             cliente.changeStatus(show,status)
         
         elif opcion == '12': #Enviar archivo
-            path = input('Ingrese el nombre de la ruta del archivo: ')
+            path = input('Ingrese el nombre del archivo: ')
             path_ = os.path.join(os.path.expanduser('~'),'Desktop','Images',path)
             dest = input('Ingrese al destinatario: ')
             cliente.sendFile(path_,dest)

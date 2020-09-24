@@ -1,11 +1,17 @@
+# ============== Client Side XMPP ====================
 from sleekxmpp import ClientXMPP
 from sleekxmpp.xmlstream.stanzabase import ET, ElementBase
 from sleekxmpp.plugins.xep_0096 import stanza, File
 from sleekxmpp.exceptions import IqError, IqTimeout
+
 import logging
+#=============== Concurrencia ========================
 import threading
+
+#============== Mostrar contactos ====================
 from prettytable import PrettyTable
 
+#============== Para envio de archivos ===================
 import filetype
 import base64
 from datetime import datetime
@@ -14,6 +20,7 @@ import subprocess
 from tkinter import filedialog
 import os
 
+# Clase para poder registrar un usuario al server
 class Register(ClientXMPP):
 
     def __init__(self, jid, password):
@@ -28,11 +35,13 @@ class Register(ClientXMPP):
         self.register_plugin('xep_0045') # Mulit-User Chat (MUC)
         self.register_plugin('xep_0096') # File transfer
 
+    #Metodo inicial
     def start(self, event):
         self.send_presence()
         self.get_roster()
         self.disconnect()
 
+    #Metodo el cual registra al usuario por medio de stanza Iq
     def registerAccount(self, iq):
         resp = self.Iq()
         resp['type'] = 'set'
@@ -40,30 +49,31 @@ class Register(ClientXMPP):
         resp['register']['password'] = self.password
 
         try:
-            print('Ha entrado al try')
             resp.send(now=True)
-            print("Account created for %s!" % self.boundjid)
+            print("Usuario creado  - %s!" % self.boundjid)
             log = logging.getLogger("my-logger")
-            log.info("Account created for %s!" % self.boundjid)
+            log.info("Usuario creado  - %s!" % self.boundjid)
         except IqError as e:
-            print("Could not register account: %s" % e.iq['error']['text'])
-            log.error("Could not register account: %s" % e.iq['error']['text'])
+            print("No se pudo realizar el registro: %s" % e.iq['error']['text'])
+            log.error("No se pudo realizar el registro: %s" % e.iq['error']['text'])
             self.disconnect()
         except IqTimeout:
-            print("No response from server.")
-            log.error("No response from server.")
+            print("No hay respuesta del servidor.")
+            log.error("No hay respuesta del servidor.")
             self.disconnect()
 
+# Clase de cliente la cual tiene todos los metodos cuando el usuario esta logueado
 class Client(ClientXMPP):
     def __init__(self, jid, password):
         ClientXMPP.__init__(self, jid, password)
-        self.auto_authorize = True
-        self.auto_subscribe = True
+        self.auto_authorize = True     #Para autorizacion automatica de solicitudes
+        self.auto_subscribe = True     #Para suscripcion automatica de solitides [both]
         self.add_event_handler("session_start", self.start)
         self.add_event_handler('message', self.message)
         self.add_event_handler('presence_subscribe',self.new_user_suscribed)
         self.add_event_handler("groupchat_message", self.group_mention)
 
+        # Para concurrencia al momento de consultar al servidor todos los usuarios
         self.received = set()
         self.presences_received = threading.Event()
 
@@ -78,6 +88,7 @@ class Client(ClientXMPP):
 
         self.nick = ""
 
+    # Metodo de inicio para envio de presencia de conexion y obtener el roster
     def start(self, event):
         try:
             log = logging.getLogger("my-logger")
@@ -91,11 +102,13 @@ class Client(ClientXMPP):
             print("No response from server.")
             log.error("No response from server.")
             self.disconnect()
-
+    
+    # Metodo para cerrar sesion
     def logout(self):
         print("Desconectado")
         self.disconnect(wait=True)
 
+    # Metodo para event handler en tal caso que mi nombre de usuario fue escrito en algun room
     def group_mention(self, msg):
         if msg['mucnick'] != self.nick and self.nick in msg['body']:
             user = str(msg['from'])
@@ -107,7 +120,7 @@ class Client(ClientXMPP):
             print("<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>")
             print('\n')
 
-
+    # Metodo para event handler que avisa si algun usuario se ha suscrito a mi
     def new_user_suscribed(self,presence):
         print('\n')
         print("<<<<<<<<<<<<<<<< NOTIFICATION >>>>>>>>>>>>>>>>>>")
@@ -115,25 +128,28 @@ class Client(ClientXMPP):
         print("<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>")
         print('\n')
 
+    # Metodo para event handler que recibe los mensajes, y muestra notificacion dependiendo del tipo
+    # Puede ser chat o groupchat o un archivo
     def message(self,msg):
         if str(msg['type']) == 'chat':
-            if str(msg['subject']) == 'send_file' or len(msg['body']) > 500:
+            if str(msg['subject']) == 'send_file' or len(msg['body']) > 500: #If para validar si esta entrando un archivo
                 print("***************** Te han enviado un archivo *******************")
                 img_body = msg['body']
                 file_ = img_body.encode('utf-8')
                 file_ = base64.decodebytes(file_)
                 with open("xmpp_"+str(int(time.time()))+".png","wb") as f:
                     f.write(file_)
-            else:
+            else: #Sino es un mensaje normal
                 print("***************** Mensaje de "+str(msg['from'])+" *****************")
                 # print("\nDe",msg['from'])
                 print(str(msg['body']))
                 print("***************************************************************")
-        elif str(msg['type']) == 'groupchat':
+        elif str(msg['type']) == 'groupchat': #En caso que sea un mensaje grupal
             print("***************** mensaje grupal ******************************")
             print('\n  (%(from)s): %(body)s' %(msg))
             print("***************************************************************")
     
+    # Para enviar un mensaje grupal a un room especifico
     def messageRoom(self,room,msg):
         try:
             self.send_message(mto=room+'@conference.redes2020.xyz',mbody=msg, mtype='groupchat')
@@ -141,20 +157,25 @@ class Client(ClientXMPP):
         except IqError:
             print("No response from server.")
 
+    # Para unirse a un room
     def joinRoom(self, room, nick):
         status = "Hello :D"
         print("Te vas a unir al room ")
         self.plugin['xep_0045'].joinMUC(room+'@conference.redes2020.xyz', nick, pstatus=status, pfrom=self.boundjid.full, wait=True)
         self.nick = nick
 
+    # Para crear y unirse a un room
+    # Diferencia con joinRoom es la afiliacion para ser administrador y desbloquear el room para que cualquier usuario pueda ingresar
     def createRoom(self, room, nick):
         status = "Hello :D"
         print("Te vas a unir al room ")
         self.plugin['xep_0045'].joinMUC(room+'@conference.redes2020.xyz', nick, pstatus=status, pfrom=self.boundjid.full, wait=True)
         self.nick = nick
+        # Para afiliacion de adminstrador y desbloquear el grupo
         self.plugin['xep_0045'].setAffiliation(room+'@conference.redes2020.xyz', self.boundjid.full, affiliation='owner')
         self.plugin['xep_0045'].configureRoom(room+'@conference.redes2020.xyz',ifrom=self.boundjid.full)
 
+    # Cambiar el status e ingresar mensaje
     def changeStatus(self, show, status):
         show_text = ""
         if(show == 1):
@@ -168,9 +189,11 @@ class Client(ClientXMPP):
 
         self.send_presence(pshow=show_text, pstatus=status)
 
+    # Para suscribirte a un usuario
     def saveUser(self,jid):
         self.send_presence_subscription(pto=jid)
 
+    # Para enviar un mensaje de tipo chat a un usuario en especifico
     def sendMessage(self,jid,message):
         try:
             self.send_message(mto=jid+'@redes2020.xyz',mbody=message, mfrom=self.boundjid.user, mtype='chat')
@@ -178,9 +201,9 @@ class Client(ClientXMPP):
         except IqError:
             print("No response from server.")
         
-
+    # Metodo para borrar cuenta del servidor
     def unregister(self):
-        iq = self.make_iq_set(ito='redes2020.xyz', ifrom=self.boundjid.user)
+        iq = self.make_iq_set(ito='redes2020.xyz', ifrom=self.boundjid.user) #Stanza de Iq y luego de remove
         item = ET.fromstring("<query xmlns='jabber:iq:register'> \
                                         <remove/> \
                                     </query>")
@@ -189,18 +212,20 @@ class Client(ClientXMPP):
         if res['type'] == 'result':
             print("Cuenta eliminada")
 
+    # Metodo para enviar un archivo por medio de base64
     def sendFile(self, path, to):
         with open(path,'rb') as img:
             file_ = base64.b64encode(img.read()).decode('utf-8')
 
         self.send_message(mto=to+'@redes2020.xyz', mbody=file_, msubject='send_file', mtype='chat')
 
+    # Metodo para obtener un usuario en especifico
     def getUser(self, username):
         print("========= Contacto a buscar ============")
         print('Esperando...\n')
         proof = False
-        self.presences_received.wait(1)
-        groups = self.client_roster.groups()
+        self.presences_received.wait(1) #Para evitar problemas de concurrencia
+        groups = self.client_roster.groups() #Para obtener los diferentes tipos de grupos del server
         t2 = PrettyTable(['Username','Subscription','Status'])
         for group in groups:
             for jid in groups[group]:
@@ -215,24 +240,25 @@ class Client(ClientXMPP):
                     if pres['show']:
                         show = pres['show']
                     temp.append(show)
-                if len(temp) == 2:
+                if len(temp) == 2: # Para validar que si no tiene estado de available, se ponga away
                     temp.append('away')
-                if str(jid) == username+"@redes2020.xyz":
+                if str(jid) == username+"@redes2020.xyz": #Valida que sea el usuario solicitado
                     proof = True
                     t2.add_row(temp)
+        #Si el usuario esta disponible muestra la tabla, sino muestra mensaje de usuario no encontrado
         if proof:
             print(t2)
         else:
             print("No se encontro al usuario")
 
 
-
+    # Metodo para obtener usuarios del server y del roster
     def getUsers(self):
         iq = self.Iq()
         iq['type'] = 'set'
         iq['id'] = 'search_result'
         iq['to'] = 'search.redes2020.xyz'
-
+        #Stanzas de query para obtener usaurios del server
         item = ET.fromstring("<query xmlns='jabber:iq:search'> \
                                 <x xmlns='jabber:x:data' type='submit'> \
                                     <field type='hidden' var='FORM_TYPE'> \
@@ -252,6 +278,7 @@ class Client(ClientXMPP):
         data = []
         temp = []
         cont = 0
+        # PAra rellenar la informacion si hace falta, y appendear en array para mostrar en tabla
         for i in res.findall('.//{jabber:x:data}value'):
             cont += 1
             txt = ''
@@ -271,10 +298,11 @@ class Client(ClientXMPP):
             t.add_row(i)
         print(t)
 
+        # Muestra lista de contactos del roster
         print("========= Lista de Contactos ============")
         print('Esperando...\n')
-        self.presences_received.wait(1)
-        groups = self.client_roster.groups()
+        self.presences_received.wait(1) #Para la concurrencia
+        groups = self.client_roster.groups() #Obtener los diferentes grupos del server
         t2 = PrettyTable(['Username','Subscription','Status'])
         for group in groups:
             for jid in groups[group]:
@@ -296,12 +324,13 @@ class Client(ClientXMPP):
                 #     while len(temp) > 3:
                 #         temp.pop(-1)
                 
+                #Si el usuario soy yo o es un grupo, que no muestre la informacion
                 if str(jid) != str(self.boundjid.bare) and str(jid).find('@conference.redes2020.xyz') == -1:
                     #print(str(temp))
                     t2.add_row(temp)
         print(t2)
             
-
+# Para saber cuantas entradas he recibido de presencia
 def wait_for_presences(self, pres):
         """
         Track how many roster entries have received presence updates.
