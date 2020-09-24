@@ -102,7 +102,7 @@ class Client(ClientXMPP):
             index = user.find('@conference')
             print('\n')
             print("<<<<<<<<<<<<<<<< NOTIFICATION >>>>>>>>>>>>>>>>>>")
-            print(user[:index]+'te ha mencionado en el grupo => '+msg['mucnick']+'\n')
+            print(user[:index]+': han mencionado tu nickname en el grupo y fue => '+msg['mucnick']+'\n')
             print('Ve y revisa que han dicho de ti \n')
             print("<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>")
             print('\n')
