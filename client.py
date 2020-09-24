@@ -203,7 +203,7 @@ class Client(ClientXMPP):
         
     # Metodo para borrar cuenta del servidor
     def unregister(self):
-        iq = self.make_iq_set(ito='redes2020.xyz', ifrom=self.boundjid.user) #Stanza de Iq y luego de remove
+        iq = self.make_iq_set(ito='redes2020.xyz', ifrom=self.boundjid.user)
         item = ET.fromstring("<query xmlns='jabber:iq:register'> \
                                         <remove/> \
                                     </query>")
