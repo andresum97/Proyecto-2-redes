@@ -36,6 +36,9 @@ If you already have an account, you can login with your username and password
 
 ### Message
 You are able to send a message to any contact of your roster, or you can talk with people in a room or send png files.
+#### Files
+You are able to send image files, like **png** or **jpg**. When you choice this option, **the direction where the files must be is Desktop/Images**, and any
+file in this carpet can be possible to send, you just have to write **filename.(jpg|png)** when the application ask for the filename, and that's it.  
 
 ### Roster
 You can visualize any user in the server, even if they are not contacts with you, and see the status of your contacts
